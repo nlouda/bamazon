@@ -15,3 +15,5 @@ The Customer receives one of two responses:
 - Unsuccesful transaction and the request to try again.
 
 After purchase the customer is asked if they would like to continue shopping and the app closes. 
+
+![Running App Image](images/runningApp.png)
