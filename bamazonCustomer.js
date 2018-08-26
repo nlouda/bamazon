@@ -47,19 +47,23 @@ function start() {
                 }
             ])
             .then(function (answer) {
-                let purchase = (answer.purchaseItem) - 1;
+                let purchase = (answer.purchaseItem)-1;
                 let purchaseAmount = parseInt(answer.amount);
                 let total = parseFloat(((results[purchase].price) * purchaseAmount).toFixed(2));
 
                 if (results[purchase].stock_quantity >= purchaseAmount) {
-                    connection.query("UPDATE products set ? where ?", [{
-                            stock_quantity: (results[purchase].stock_quantity - purchaseAmount)
+                    let newQuantity = (results[purchase].stock_quantity - purchaseAmount);
+                    connection.query("UPDATE products SET ? WHERE ?",[
+                        {
+                            stock_quantity: newQuantity
                         }, {
-                            item_id: answer.item_id
+                            item_id: purchase.item_id
                         }],
-                        function (err, result) {
+                        function (err) {
                             if (err) throw err;
+                            console.log("Number ID: " + results[purchase].item_id + " Product: " + results[purchase].product_name + " Department: " + results[purchase].department_name + " Price: " + results[purchase].price, " Quantity in Stock: "+ results[purchase].stock_quantity)
                             console.log("Order placed successfully! Your total is $" + total.toFixed(2) + ".")
+
                             restart();
                         })
                 } else {
