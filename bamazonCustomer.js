@@ -1,63 +1,86 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql');
 //creating the connection to mysql
-var connection = mysql.createConnection({
+const connection = mysql.createConnection({
     host: "localhost",
-    port: 3336,
+    port: 3306,
     user: "root",
     password: "rootroot",
     database: "bamazon_DB"
 });
 
-connection.connect(function (err) {
-    if (err) throw err;
-    start();
-});
 
 function start() {
     connection.query("SELECT * FROM products", function (err, results) {
         if (err) throw err;
+        console.log("Welcome to Bamazon")
+        console.log("Where your purchases are imaginary and extraordinary.")
+        for (let i = 0; i < results.length; i++) {
+            console.log("Number ID: " + results[i].item_id + " Product: " + results[i].product_name + " Department: " + results[i].department_name + " Price: " + results[i].price, " Quantity in Stock: "+ results[i].stock_quantity)
+        }
+        console.log(" ");
+
         inquirer
             .prompt([{
-                    name: "displayItems",
-                    type: "rawlist",
-                    choices: function () {
-                        let choiceArray = [];
-                        for (let i = 0; i < results.length; i++) {
-                            choiceArray.push(results[i].product_name);
+                    name: "purchaseItem",
+                    type: "input",
+                    message: "What would you like to purchase(Select by Number ID)?",
+                    validate: function(value) {
+                        if(isNaN(value)== false && parseInt(value)<= results.length && parseInt(value)> 0) {
+                            return true;
+                        } else {
+                            return false;
                         }
-                        return choiceArray;
-                    },
-                    message: "Welcome to Bamazon where your purchases are imaginary and extraordinary. What would you like to purchase?",
+                    }
                 },
                 {
                     name: "amount",
                     type: "input",
-                    message: "how many do you need?"
+                    message: "how many do you need?",
+                    validate: function(value) {
+                        if (isNaN(value)) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    }
                 }
             ])
             .then(function (answer) {
-                let chosenItem;
-                for (let i = 0; i < results.length; i++) {
-                    if (result[i].product_name === answer.displayItems) {
-                        chosenItem = results[i];
-                    }
-                }
-                if (chosenItem.stock_quantity < parseInt(answer.amount)) {
-                    connection.query(
-                        "UPDATE products SET ? WHERE ?", [{
-                            stock_quantity: stock_quantity - answer.amount
-                        }, ],
-                        function (error) {
-                            if (error) throw err;
-                            console.log("Order placed succesfully!!!");
-                            start();
-                        }
-                    );
+                let purchase = (answer.purchaseItem) - 1;
+                let purchaseAmount = parseInt(answer.amount);
+                let total = parseFloat(((results[purchase].price) * purchaseAmount).toFixed(2));
+
+                if (results[purchase].stock_quantity >= purchaseAmount) {
+                    connection.query("UPDATE products set ? where ?", [{
+                            stock_quantity: (results[purchase].stock_quantity - purchaseAmount)
+                        }, {
+                            item_id: answer.item_id
+                        }],
+                        function (err, result) {
+                            if (err) throw err;
+                            console.log("Order placed successfully! Your total is $" + total.toFixed(2) + ".")
+                            restart();
+                        })
                 } else {
                     console.log("Sorry, inventory is low. Try again...")
-                    start();
+                    restart();
+                }
+
+                function restart() {
+                    inquirer.prompt([{
+                        name: "response",
+                        type: "confirm",
+                        message: "Would you like to purchase a new item?"
+                    }]).then(function (answer) {
+                        if (answer.response) {
+                            start();
+                        } else {
+                            console.log("Thank you for your purchase, have a great day!!");
+                        }
+                    })
                 }
             });
     });
 }
+start();
