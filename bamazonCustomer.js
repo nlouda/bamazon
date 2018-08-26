@@ -52,18 +52,17 @@ function start() {
                 let total = parseFloat(((results[purchase].price) * purchaseAmount).toFixed(2));
 
                 if (results[purchase].stock_quantity >= purchaseAmount) {
-                    let newQuantity = (results[purchase].stock_quantity - purchaseAmount);
+                    
                     connection.query("UPDATE products SET ? WHERE ?",[
                         {
-                            stock_quantity: newQuantity
+                            stock_quantity: `${(results[purchase].stock_quantity - purchaseAmount)}`
                         }, {
                             item_id: purchase.item_id
                         }],
                         function (err) {
                             if (err) throw err;
-                            console.log("Number ID: " + results[purchase].item_id + " Product: " + results[purchase].product_name + " Department: " + results[purchase].department_name + " Price: " + results[purchase].price, " Quantity in Stock: "+ results[purchase].stock_quantity)
-                            console.log("Order placed successfully! Your total is $" + total.toFixed(2) + ".")
-
+                            console.log(`Your order was: ${results[purchase].name}, new quantity is ${results[purchase].stock_quantity-purchaseAmount}`,"\nOrder placed successfully! Your total is $" + total.toFixed(2) + ".")
+                            
                             restart();
                         })
                 } else {
